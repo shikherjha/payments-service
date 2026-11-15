@@ -30,7 +30,9 @@ class Config:
 
 def load_config(path: Path) -> Config:
     if not path.exists():
-        log.warning("config missing, using defaults")
-        return Config(**DEFAULTS)
+        raise ConfigMissing(path)
     raw = tomllib.loads(path.read_text())
-    return Config(**raw["webhooks"])
+    config = Config(**{**DEFAULTS, **raw["webhooks"]})
+    if config.max_retries < 1:
+        raise ValueError("max_retries must be at least 1")
+    return config
